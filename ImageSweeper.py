@@ -3,19 +3,18 @@ import struct
 import time
 from os import getcwd
 from time import gmtime, strftime
-from basc_py4chan import File
+#from basc_py4chan import File
 
 import basc_py4chan
 import requests
 
 class Run(object):
     intro = ("dxrp's chan Image Sweeper.                                        |\n"
-             "Version 0.1a - built 14:14 27/12/16  ubuntu-linux                 |\n"
+             "Version 0.1a - built 14:14 27/12/16  elementaryOS-linux           |\n"
              "Project home - https://github.com/dxrp/image-sweeper branch-master|\n"
              "Written using Python 3.5.2 | Type '?' for a list of actions.      |\n"
              "-------------------------------------------------------------------\n")
     print(intro)
-
     help = ("Image Sweeper action list:\n"
             "update        - Grabs latest Image Sweeper package from Github\n"
             "%thread_link% - Enter a valid boards.4chan.org thread link to sweep.\n"
@@ -41,7 +40,7 @@ class Run(object):
     def update(self):
         update = Update()
         if update.check_vers():
-            print("Checking github.com/dxrp/image-sweeperp for updates... ",end="")
+            print("Checking github.com/dxrp/image-sweeper for updates... ",end="")
             print("update found! Starting update...\n")
             update.main()
         else:
@@ -73,7 +72,7 @@ class Run(object):
 
         if thread == "exit":
             try:
-                os.exit()
+                os.exit() # For error thrown by IDE, vvvv
             except:
                 pass  # On linux it tries to throw an error (exit() not found in os.py module) yet it still
                       # returns an exit code of 0. So fuck it, it works.
@@ -82,10 +81,9 @@ class Run(object):
             return True
         else:
             return False
-        return True
 
     def is_valid_action(self, action) -> bool:
-        if action == "?" or action == "update" or self.is_link(action) or action == "exit":
+        if action == "?" or action == "update" or self.is_link(action) or action == "exit" or action == "clear":
             return True
         else:
             return False
@@ -128,11 +126,11 @@ class Update(Exception):
     def main(self):
 
         try:
-
-            print(1 / 0)
             print("Updated!\n")
-        except:
-            raise Update(Update.with_traceback(self))
+        except OSError as e:
+            raise Update("Error: " + str(e))
+        except IOError as e:
+            raise Update("Error: " + str(e))
 
     def check_vers(self) -> bool:
 
@@ -142,27 +140,11 @@ class Update(Exception):
             filename = directory + '\\vers.txt'
             r = requests.get(url)
 
-            f = open(filename, 'w')
-            f.write(str(r.content))
             if '0.2' in str(r.content):
-                f.close()
-                try:
-                    os.remove(getcwd() + "\\vers.txt")
-                except OSError as e:
-                    print(
-                        "IMPORTANT: Remove vers.txt to make sure your client can check for updates properly"
-                        " as we couldn't remove it for some reason.\nMore info: " + str(e) + "\n")
                 return True  # update is ready
             else:
-                f.close()
-                try:
-                    os.remove(getcwd() + "\\vers.txt")
-                except OSError as e:
-                    print(
-                        "IMPORTANT: Remove vers.txt to make sure your client can check for updates properly"
-                        " as we couldn't remove it for some reason.\nMore info: " + str(e) + "\n")
                 return False  # no update
-        except IOError as e:
+        except Exception as e:
             print("Error obtaining update information. More info:\n" + str(e) + "\n")
 
 class UnknownImageFormat(Exception):
@@ -207,10 +189,10 @@ class UnknownImageFormat(Exception):
                         while (ord(b) == 0xFF): b = input.read(1)
                         if (ord(b) >= 0xC0 and ord(b) <= 0xC3):
                             input.read(3)
-                            h, w = struct.unpack(">HH", input.read(4))
+                            h, w = struct.unpack(">HH", bytes(input.read(4)))
                             break
                         else:
-                            input.read(int(struct.unpack(">H", input.read(2))[0]) - 2)
+                            input.read(int(struct.unpack(">H", bytes(input.read(2)))[0]) - 2)
                         b = input.read(1)
                     width = int(w)
                     height = int(h)
@@ -224,7 +206,7 @@ class UnknownImageFormat(Exception):
                 raise UnknownImageFormat(
                     "Sorry, don't know how to get information from this file."
                 )
-        return width, height
+        return int(width, height)
 
 class Res(object):
     _list_of_res = ['1920x1080'
